@@ -1,0 +1,46 @@
+
+
+.idea/
+
+### Android Studio ###
+local.properties
+
+
+### Gradle ###
+.gradle
+build/
+gradlew
+gradle/
+gradlew.bat
+
+release.properties
+
+### OSX ###
+.DS_Store
+
+### built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+atlassian-ide-plugin.xml
+.idea/dictionaries
+
+
+#Android Gears
+Gears/
+.gearsproject
+captures/
+.idea/findbugs-idea.xml
+
+#JavaDoc
+javadoc/
+
+config/artifactory.properties
+
+*.iml
