@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Kotlin Coroutines</string>
+    <string name="coroutine_update_ui_text">Coroutine update UI</string>
 </resources>
