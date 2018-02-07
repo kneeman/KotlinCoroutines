@@ -1,12 +1,19 @@
 package com.example.envoy.kotlincoroutines
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
+import android.widget.Button
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.experimental.sync.withLock
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.system.measureTimeMillis
 
 class MainActivity : AppCompatActivity() {
@@ -23,17 +30,36 @@ class MainActivity : AppCompatActivity() {
         button_coroutine_update_ui.setOnClickListener { launchDelayWithUIActionOnCompletion(false) }
         button_combine_tasks_sequentially.setOnClickListener { combiningTasksSequentially() }
         button_combine_tasks_asynchronously.setOnClickListener { combiningTasksAsynchronously() }
-        button_run_blocking.setOnClickListener({runBlockingCoroutine(true)})
-        button_contexts.setOnClickListener{coroutineContexts()}
+        button_run_blocking.setOnClickListener({ runBlockingCoroutine(true) })
+        button_contexts.setOnClickListener { coroutineContexts() }
         button_disrespectul.setOnClickListener { willNotRespectCancel() }
         button_respectul.setOnClickListener { willRespectCancel() }
+        button_first_channel.setOnClickListener { ourFirstChannel() }
+        button_close_channel.setOnClickListener { channelCloseIterationStyle() }
+        button_producer_consumer.setOnClickListener { producerCoroutine() }
+        button_pipelines.setOnClickListener { runMyPipelines() }
+        button_pingpong.setOnClickListener { playPingPong() }
+        button_dispatches.setOnClickListener { dispatchTips() }
+        button_room.setOnClickListener { goToRoomActivity() }
+        button_no_synchronization.setOnClickListener { startMassiveRun() }
+        button_volatile.setOnClickListener { startMassiveRunWithVolatile() }
+        button_threadsafe_structure.setOnClickListener { startMassiveRunWithAtomicData() }
+        button_thread_confinement_fine.setOnClickListener { startMassiveRunWithThreadConfinementFine() }
+        button_thread_confinement_coarse.setOnClickListener { startMassiveRunWithThreadConfinementCoarse() }
+        button_mutex.setOnClickListener{startMassiveRunWithMutex()}
 
     }
+
+    private fun goToRoomActivity() {
+        intent = Intent(this, RoomActivity::class.java)
+        startActivity(intent)
+    }
+
 
     private fun handleClickListener(v: View) {
         when (v.id) {
             R.id.button_simple_coroutine_noui -> launchDelayNoUI(false)
-            else -> println("Unhandled view click listener")
+            else -> println("Unhandled view click listener!")
         }
     }
 
@@ -107,19 +133,24 @@ class MainActivity : AppCompatActivity() {
     private fun coroutineContexts() {
         runBlocking<Unit> {
             val jobs = arrayListOf<Job>()
-            jobs += launch { //Default coroutine context.  Default is the commonPool thread.
+            jobs += launch {
+                //Default coroutine context.  Default is the commonPool thread.
                 Log.i("Coroutines", "Default context': I'm working in thread ${Thread.currentThread().name}")
             }
-            jobs += launch(Unconfined) { // not confined -- will work with main thread
+            jobs += launch(Unconfined) {
+                // not confined -- will work with main thread
                 Log.i("Coroutines", "Unconfined': I'm working in thread ${Thread.currentThread().name}")
             }
-            jobs += launch(coroutineContext) { // context of the parent, runBlocking coroutine
+            jobs += launch(coroutineContext) {
+                // context of the parent, runBlocking coroutine
                 Log.i("Coroutines", "coroutineContext': I'm working in thread ${Thread.currentThread().name}")
             }
-            jobs += launch(CommonPool) { // will get dispatched to ForkJoinPool.commonPool (or equivalent)
+            jobs += launch(CommonPool) {
+                // will get dispatched to ForkJoinPool.commonPool (or equivalent)
                 Log.i("Coroutines", "CommonPool': I'm working in thread ${Thread.currentThread().name}")
             }
-            jobs += launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
+            jobs += launch(newSingleThreadContext("MyOwnThread")) {
+                // will get its own new thread
                 Log.i("Coroutines", "new single thread context': I'm working in thread ${Thread.currentThread().name}")
             }
             jobs.forEach { it.join() }
@@ -150,16 +181,16 @@ class MainActivity : AppCompatActivity() {
     //background processing or the 'onPostExecute'.  Jose was very impressed.
     private fun mimicAsync() {
         val job =
-            launch {
-                Log.i("Coroutines", "mimicAsync method started")
-                delay(10000)
-                Log.i("Coroutines", "mimicAsync delay completed")
-                //button_temp.text = "I am going to crash" IMPORTANT - This line will compile, but create a run-time crash
-                launch(UI) {
-                    someOtherMethod()
-                    button_respectul.text = "I am done!"
+                launch {
+                    Log.i("Coroutines", "mimicAsync method started")
+                    delay(10000)
+                    Log.i("Coroutines", "mimicAsync delay completed")
+                    //button_temp.text = "I am going to crash" IMPORTANT - This line will compile, but create a run-time crash
+                    launch(UI) {
+                        someOtherMethod()
+                        button_respectul.text = "I am done!"
+                    }
                 }
-            }
     }
 
     private fun someOtherMethod() {
@@ -216,14 +247,379 @@ class MainActivity : AppCompatActivity() {
     //is considered to be a normal reason for coroutine completion
     private fun usingCancelableSuspendingFunctions() {
         runBlocking<Unit> {
-            withTimeout(1300L) {  //withTimeout in CoroutineScope that will throw a TimeoutCancellationException
-                                        //which is a subclass of CancellationException
+            withTimeout(1300L) {
+                //withTimeout in CoroutineScope that will throw a TimeoutCancellationException
+                //which is a subclass of CancellationException
                 repeat(1000) { i ->
                     println("I'm sleeping $i ...")
                     delay(500L)
                 }
             }
         }
+    }
+
+
+    /**
+     * Coroutines continued code
+     */
+
+
+    // Coroutine contexts can be combined with + operator.  Right side replaces relevant entries of context on the left
+    //side
+    private fun combineContexts() {
+        val button = Button(this)
+        val job = launch(UI) {
+            //This will be the parent task for
+            //offload the real work to CommonPool
+            val result = async(coroutineContext + CommonPool) {
+                //While this is running the UI thread is NOT suspended
+                delay(10000)
+                "I am done"
+            }.await()
+            button.text = result
+        }
+    }
+
+    private fun anotherWay() {  //There is one difference here.  Can you spot it?  How do we remove that difference?
+        val button = Button(this)
+        val job = launch {
+            val result = async {
+                delay(10000)
+                "I am done"
+            }
+            launch(UI) {
+                button.text = result.await()
+            }
+        }
+    }
+
+
+    /**
+     *
+     *
+     * Channels
+     *
+     */
+
+
+    private fun ourFirstChannel(){
+        launch {
+            val channel = Channel<Int>()
+            launch {
+                // this might be heavy CPU-consuming computation or async logic, we'll just send five squares
+                for (x in 1..5){
+                    Log.i("Coroutines", "Channel sending data from index: $x")
+                    channel.send(x * x)
+                }
+            }
+            // here we print five received integers
+            //Receive blocks waiting on each iteration until it has something sent from the channel.
+            repeat(5) { Log.i("Coroutines", "Channel received data : ${channel.receive()}") }
+            Log.i("Coroutines", "Done!")
+        }
+    }
+
+
+    //Doing the same thing as ourFirstChannel() but the receiver will be handled a bit differently
+    //there is a BIG issue here, can you spot it?
+    private fun channelCloseIterationStyle() {
+        launch {
+            val channel = Channel<Int>()
+            launch {
+                for (x in 1..5){
+                    Log.i("Coroutines", "Channel sending data from index: $x")
+                    channel.send(x * x)
+                }
+                channel.close() //We are informing receiver that we are done sending
+            }
+
+            //Now we replace our previous repeat with the channel itself that then knows (little magic box here) when
+            //it is done
+            for (y in channel) {
+                //Log.i("Coroutines", "Channel received data : $y")
+                Log.i("Coroutines", "Channel received data : ${channel.receive()}")
+            }
+            Log.i("Coroutines", "Done!")
+        }
+    }
+
+
+    /**
+     * Demonstrate convenience builder for coroutine that makes producer-consumer pattern easier
+     */
+    private fun producerCoroutine() {
+        val producer = produce<Int> {
+            for (x in 1..5){
+                Log.i("Coroutines", "Channel sending data from index: $x")
+                send(x * x)
+            }
+        }
+
+        launch {
+            //No for loop required!
+            producer.consumeEach {
+                Log.i("Coroutines", "Channel received data : $it")
+            }
+        }
+    }
+
+    //Pipeline - pattern where coroutine produces a possible infinite stream of values.
+
+    private fun numbersPipeline(context : CoroutineContext, start : Int) = produce<Int>(context) {
+        var x = start
+        while (true){ //Please note that Bill did not write this
+            Log.i("Coroutines", "numbersPipeline sending: $x")
+            send(x++)
+        }
+    }
+
+    //ReceiveChannel is the receivers interface to channel
+    private fun filterPipeline(context: CoroutineContext, numbers :ReceiveChannel<Int>, prime : Int) = produce<Int>(context){
+        for (x in numbers) {
+            if (x % prime != 0){
+                Log.i("Coroutines", "filterPipeline sending: $x")
+                send(x)
+            }
+
+        }
+    }
+
+    private fun runMyPipelines() = runBlocking <Unit> {
+        var currentNumberFromPipeline = numbersPipeline(coroutineContext, 2)
+        for (i in 1..10) {
+            val prime = currentNumberFromPipeline.receive()
+            Log.i("Coroutines", "Found a prime!: $prime")
+            currentNumberFromPipeline = filterPipeline(coroutineContext, currentNumberFromPipeline, prime)
+        }
+        coroutineContext.cancelChildren()
+    }
+
+
+    /**
+     * Fan Out - Channel can send to multiple coroutines
+     */
+
+    fun produceNumbers() = produce<Int> {
+        var x = 1 // start from 1
+        while (true) {
+            send(x++) // produce next
+            delay(100) // wait 0.1s
+        }
+    }
+
+    fun launchProcessor(id: Int, channel: ReceiveChannel<Int>) = launch {
+        channel.consumeEach {
+            println("Processor #$id received $it")
+        }
+    }
+
+    fun runFanOut(){
+        runBlocking<Unit> {
+            val producer = produceNumbers()
+            repeat(5) { launchProcessor(it, producer) }
+            delay(950)
+            producer.cancel() // cancel producer coroutine and thus kill them all
+        }
+    }
+
+
+    /**
+     * Fan In - Multiple co-routines can send to the same channel
+     */
+
+    suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
+        while (true) {
+            delay(time)
+            channel.send(s)
+        }
+    }
+
+    fun fanIn() {
+        runBlocking<Unit> {
+            val channel = Channel<String>()
+            launch(coroutineContext) { sendString(channel, "foo", 200L) }
+            launch(coroutineContext) { sendString(channel, "BAR!", 500L) }
+            repeat(6) { // receive first six
+                println(channel.receive())
+            }
+            coroutineContext.cancelChildren() // cancel all children to let main finish
+        }
+    }
+
+    //Go over concept of Unbuffered (default) and Buffered channels
+
+
+    /**
+     * Channels are fair.  The first receiver to invoke receive gets the element.  Also this is a really cool example
+     * because doing a ping pong exercise was the very first multi-threaded exercise I did in school with java in 1954.
+     */
+
+    data class Ball(var hits: Int)
+
+    fun playPingPong() {
+        runBlocking<Unit> {
+            val tableChannel = Channel<Ball>() // a shared table
+            launch(coroutineContext) { player("ping", tableChannel) }
+            launch(coroutineContext) { player("pong", tableChannel) }
+            tableChannel.send(Ball(0)) // serve the ball
+            delay(1000) // delay 1 second
+            coroutineContext.cancelChildren() // game over, cancel them
+        }
+    }
+
+    suspend fun player(name: String, table: Channel<Ball>) {
+        for (ball in table) { // receive the ball in a loop.  At this point the player is ready to receive from the channel
+            ball.hits++
+            Log.i("Coroutines", "$name $ball")
+            delay(300) // wait a bit
+            table.send(ball) // send the ball back
+        }
+    }
+
+
+    /**
+     *  Bonus tip of the day.  Dispatched vs undispatched coroutines
+     */
+
+
+    //So read the code below and tell me what you think the results will be?
+    fun dispatchTips() {
+        Log.i("Coroutines", "Before launch")
+        launch(CommonPool) {  //reminder - CommonPool is redundant because it is the default
+            Log.i("Coroutines", "Inside Coroutine")
+            delay(100)
+            Log.i("Coroutines", "After delay")
+        }
+        Log.i("Coroutines", "After launch")
+    }
+    //Async actions are always postponed to be executed later in the event dispatch thread.  To change this behavior,
+    //you would change the code to the following - launch(CommonPool, CoroutineStart.UNDISPATCHED)
+
+
+
+    /**
+     * Stay tuned for the final episode of Kotlin Coroutines (maybe) where we go over "Shared mutable state and concurrency"
+     * plus the Actors who define them!
+     */
+
+
+    suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
+        val numberOfCoroutines = 1000 // number of coroutines to launch
+        val numberActionsPerCoroutine = 1000 // times an action is repeated by each coroutine
+        val time = measureTimeMillis {
+            val jobs = List(numberOfCoroutines) {
+                launch(context) {
+                    repeat(numberActionsPerCoroutine) { action() }
+                }
+            }
+            jobs.forEach {
+                it.join() //FYI - Join will also start a corresponding coroutine if the job is in a new state.
+            }
+        }
+        Log.i("Coroutines", "Completed ${numberOfCoroutines * numberActionsPerCoroutine} actions in $time ms")
+    }
+
+    var counter = 0
+
+    fun startMassiveRun() = runBlocking<Unit> {
+        massiveRun(CommonPool) {
+            counter++
+        }
+        Log.i("Coroutines", "Counter = $counter")
+        counter = 0
+    }
+
+    //Volatile to the rescue?  Lets try it...
+
+    @Volatile // in Kotlin `volatile` is an annotation
+    var volatileCounter = 0
+
+    fun startMassiveRunWithVolatile() = runBlocking<Unit> {
+        massiveRun(CommonPool) {
+            volatileCounter++
+        }
+        Log.i("Coroutines", "Volatile Counter = $volatileCounter")
+        volatileCounter = 0
+
+        //So volatile does not work
+    }
+
+
+    /**
+     * Thread safe state solutions!
+     */
+
+
+    /**
+     *  #1 - Thread-safe Data Structures
+     */
+
+
+    var counterAtomic = AtomicInteger()
+
+    fun startMassiveRunWithAtomicData() = runBlocking<Unit> {
+        massiveRun(CommonPool) {
+            counterAtomic.addAndGet(1)
+            //really for a counter use - counterAtomic.incrementAndGet()
+
+
+        }
+        Log.i("Coroutines", "Atomic Counter = $counterAtomic")
+        counterAtomic.set(0)
+    }
+
+
+    /**
+     *  #2 - Thread confinement
+     */
+    val counterContext = newSingleThreadContext("CounterContext") //Note the use of naming our context
+    var counterThreadContextFine = 0
+
+    //Fine thread confinement means you limit all access to the shared state to a single thread, but coroutine is started
+    //on a different thread
+    fun startMassiveRunWithThreadConfinementFine() = runBlocking<Unit> {
+        massiveRun(CommonPool) { // run each coroutine in CommonPool
+            withContext(counterContext) { // but confine each increment to the single-threaded context
+                counterThreadContextFine++
+            }
+        }
+        Log.i("Coroutines", "Counter using fine thread confinement = $counterThreadContextFine")
+        //This will run relatively slowly because you are switching from CommonPool to the other context each time
+        counterThreadContextFine = 0
+    }
+
+
+    var counterThreadContextCoarse = 0
+    fun startMassiveRunWithThreadConfinementCoarse() = runBlocking<Unit> {
+        massiveRun(counterContext) { // run each coroutine in the single-threaded context
+            counterThreadContextCoarse++
+        }
+        Log.i("Coroutines", "Counter using coarse thread confi nement = $counterThreadContextCoarse")
+        //No longer switching threads to access the shared state, so should run faster
+        counterThreadContextCoarse = 0
+    }
+
+    //Keep in mind you dice these up as you see fit.  Fine and course are just words to show a concept. Fine to you might
+    // mean each individual data is on its own thread and course might mean you update all your data on one specific thread.
+
+    /**
+     *  #3 - Mutual Exclusion - think synchronized block!
+     *  Creates a section of code that is never executed concurrently.
+     *  Mutex class has lock (suspending function) and unlock functions to mark a critical section
+     */
+
+    val mutex = Mutex()
+    var counterMutex = 0
+
+    fun startMassiveRunWithMutex() = runBlocking<Unit> {
+        massiveRun(CommonPool) {
+            mutex.withLock { //Even easier the withLock extension function has mutex.lock, try{...}, finally{...}, and
+                                //mutex unlock all implemented for you.
+                counterMutex++
+            }
+        }
+        Log.i("Coroutines", "Counter using a mutex object = $counterMutex")
+        counterMutex = 0
     }
 
 }

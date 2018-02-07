@@ -1,112 +1,282 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:orientation="vertical">
+    android:layout_width="match_parent">
 
-    <Button
+    <LinearLayout
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:orientation="vertical">
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_simple_coroutine_noui"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Simple Coroutine"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_coroutine_update_ui"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="@string/coroutine_update_ui_text"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_combine_tasks_sequentially"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Sequential Tasks"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_combine_tasks_asynchronously"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Asynchronous Tasks"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_run_blocking"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Run Blocking Coroutine"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_contexts"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Coroutine Contexts"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_disrespectul"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Disrespectful"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_respectul"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Respectufl"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_first_channel"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Channel It!"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
         android:background="@drawable/button_selector"
         android:gravity="center"
-        android:id="@+id/button_simple_coroutine_noui"
+        android:id="@+id/button_close_channel"
         android:layout_gravity="center"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginTop="16dp"
         android:layout_width="wrap_content"
         android:padding="8dp"
-        android:text="Simple Coroutine"
+        android:text="Channel Close"
         android:textColor="@android:color/white"
         android:textSize="20sp"/>
 
-    <Button
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_producer_consumer"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Producer Consumer"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_pipelines"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Pipelines"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_pingpong"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Ping Pong"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_dispatches"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Dispatcher"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <Button
         android:background="@drawable/button_selector"
         android:gravity="center"
-        android:id="@+id/button_coroutine_update_ui"
+        android:id="@+id/button_room"
         android:layout_gravity="center"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginTop="16dp"
         android:layout_width="wrap_content"
         android:padding="8dp"
-        android:text="@string/coroutine_update_ui_text"
+        android:text="Go To Your Room!"
         android:textColor="@android:color/white"
         android:textSize="20sp"/>
 
-    <Button
-        android:background="@drawable/button_selector"
-        android:gravity="center"
-        android:id="@+id/button_combine_tasks_sequentially"
-        android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:layout_width="wrap_content"
-        android:padding="8dp"
-        android:text="Sequential Tasks"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_no_synchronization"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="No Synchronnization?"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_volatile"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Volatile?"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_threadsafe_structure"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Threadsafe Data Structure?"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
 
-    <Button
-        android:background="@drawable/button_selector"
-        android:gravity="center"
-        android:id="@+id/button_combine_tasks_asynchronously"
-        android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:layout_width="wrap_content"
-        android:padding="8dp"
-        android:text="Asynchronous Tasks"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_thread_confinement_fine"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Thread Confinement Fine"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_thread_confinement_coarse"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Thread Confinement Coarse"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_mutex"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Mutex Gene"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
 
-    <Button
-    android:background="@drawable/button_selector"
-    android:gravity="center"
-    android:id="@+id/button_run_blocking"
-    android:layout_gravity="center"
-    android:layout_height="wrap_content"
-    android:layout_margin="16dp"
-    android:layout_width="wrap_content"
-    android:padding="8dp"
-    android:text="Run Blocking Coroutine"
-    android:textColor="@android:color/white"
-    android:textSize="20sp"/>
-
-    <Button
-        android:background="@drawable/button_selector"
-        android:gravity="center"
-        android:id="@+id/button_contexts"
-        android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:layout_width="wrap_content"
-        android:padding="8dp"
-        android:text="Coroutine Contexts"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"/>
-
-    <Button
-        android:background="@drawable/button_selector"
-        android:gravity="center"
-        android:id="@+id/button_disrespectul"
-        android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:layout_width="wrap_content"
-        android:padding="8dp"
-        android:text="Temp"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"/>
-
-    <Button
-        android:background="@drawable/button_selector"
-        android:gravity="center"
-        android:id="@+id/button_respectul"
-        android:layout_gravity="center"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:layout_width="wrap_content"
-        android:padding="8dp"
-        android:text="Temp"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"/>
-
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>
