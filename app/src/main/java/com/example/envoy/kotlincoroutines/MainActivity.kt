@@ -344,7 +344,6 @@ class MainActivity : AppCompatActivity() {
             for (y in channel) {
                 //Log.i("Coroutines", "Channel received data : $y")
                 Log.i("Coroutines", "Channel received data : ${channel.receive()}")
-                delay(10000) //TODO CK To show crash when receiving while channel is closed.  Remove this line and push up.
             }
             Log.i("Coroutines", "Done!")
         }
@@ -573,7 +572,6 @@ class MainActivity : AppCompatActivity() {
         massiveRun(CommonPool) {
             counterAtomic.addAndGet(1)
             //really for a counter use - counterAtomic.incrementAndGet()
-
 
         }
         Log.i("Coroutines", "Atomic Counter = $counterAtomic")
