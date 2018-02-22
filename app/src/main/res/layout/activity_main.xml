@@ -277,6 +277,54 @@
             android:text="Mutex Gene"
             android:textColor="@android:color/white"
             android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_actor"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Actors"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_select"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Select"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_select_close"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Select With Close"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+        <Button
+            android:background="@drawable/button_selector"
+            android:gravity="center"
+            android:id="@+id/button_select_side_channel"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:padding="8dp"
+            android:text="Select With Side Channel"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
 
     </LinearLayout>
 </ScrollView>

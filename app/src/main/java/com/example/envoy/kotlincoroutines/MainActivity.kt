@@ -10,6 +10,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.selects.select
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 import java.util.concurrent.atomic.AtomicInteger
@@ -46,7 +47,12 @@ class MainActivity : AppCompatActivity() {
         button_threadsafe_structure.setOnClickListener { startMassiveRunWithAtomicData() }
         button_thread_confinement_fine.setOnClickListener { startMassiveRunWithThreadConfinementFine() }
         button_thread_confinement_coarse.setOnClickListener { startMassiveRunWithThreadConfinementCoarse() }
-        button_mutex.setOnClickListener{startMassiveRunWithMutex()}
+        button_mutex.setOnClickListener { startMassiveRunWithMutex() }
+        button_actor.setOnClickListener { startMassiveRunWithActor() }
+        button_select.setOnClickListener { runFizzBuzz() }
+        button_select_close.setOnClickListener { runSelectHandlingClosedChannel() }
+        button_select_side_channel.setOnClickListener { runSideChannel() }
+
 
     }
 
@@ -302,12 +308,12 @@ class MainActivity : AppCompatActivity() {
      */
 
 
-    private fun ourFirstChannel(){
+    private fun ourFirstChannel() {
         launch {
             val channel = Channel<Int>()
             launch {
                 // this might be heavy CPU-consuming computation or async logic, we'll just send five squares
-                for (x in 1..5){
+                for (x in 1..5) {
                     Log.i("Coroutines", "Channel sending data from index: $x")
                     channel.send(x * x)
                 }
@@ -326,7 +332,7 @@ class MainActivity : AppCompatActivity() {
         launch {
             val channel = Channel<Int>()
             launch {
-                for (x in 1..5){
+                for (x in 1..5) {
                     Log.i("Coroutines", "Channel sending data from index: $x")
                     channel.send(x * x)
                 }
@@ -338,6 +344,7 @@ class MainActivity : AppCompatActivity() {
             for (y in channel) {
                 //Log.i("Coroutines", "Channel received data : $y")
                 Log.i("Coroutines", "Channel received data : ${channel.receive()}")
+                delay(10000) //TODO CK To show crash when receiving while channel is closed.  Remove this line and push up.
             }
             Log.i("Coroutines", "Done!")
         }
@@ -349,7 +356,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun producerCoroutine() {
         val producer = produce<Int> {
-            for (x in 1..5){
+            for (x in 1..5) {
                 Log.i("Coroutines", "Channel sending data from index: $x")
                 send(x * x)
             }
@@ -359,24 +366,25 @@ class MainActivity : AppCompatActivity() {
             //No for loop required!
             producer.consumeEach {
                 Log.i("Coroutines", "Channel received data : $it")
+                delay(10000)
             }
         }
     }
 
     //Pipeline - pattern where coroutine produces a possible infinite stream of values.
 
-    private fun numbersPipeline(context : CoroutineContext, start : Int) = produce<Int>(context) {
+    private fun numbersPipeline(context: CoroutineContext, start: Int) = produce<Int>(context) {
         var x = start
-        while (true){ //Please note that Bill did not write this
+        while (true) { //Please note that Bill did not write this
             Log.i("Coroutines", "numbersPipeline sending: $x")
             send(x++)
         }
     }
 
     //ReceiveChannel is the receivers interface to channel
-    private fun filterPipeline(context: CoroutineContext, numbers :ReceiveChannel<Int>, prime : Int) = produce<Int>(context){
+    private fun filterPipeline(context: CoroutineContext, numbers: ReceiveChannel<Int>, prime: Int) = produce<Int>(context) {
         for (x in numbers) {
-            if (x % prime != 0){
+            if (x % prime != 0) {
                 Log.i("Coroutines", "filterPipeline sending: $x")
                 send(x)
             }
@@ -384,7 +392,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun runMyPipelines() = runBlocking <Unit> {
+    private fun runMyPipelines() = runBlocking<Unit> {
         var currentNumberFromPipeline = numbersPipeline(coroutineContext, 2)
         for (i in 1..10) {
             val prime = currentNumberFromPipeline.receive()
@@ -413,7 +421,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun runFanOut(){
+    fun runFanOut() {
         runBlocking<Unit> {
             val producer = produceNumbers()
             repeat(5) { launchProcessor(it, producer) }
@@ -439,7 +447,8 @@ class MainActivity : AppCompatActivity() {
             val channel = Channel<String>()
             launch(coroutineContext) { sendString(channel, "foo", 200L) }
             launch(coroutineContext) { sendString(channel, "BAR!", 500L) }
-            repeat(6) { // receive first six
+            repeat(6) {
+                // receive first six
                 println(channel.receive())
             }
             coroutineContext.cancelChildren() // cancel all children to let main finish
@@ -485,7 +494,8 @@ class MainActivity : AppCompatActivity() {
     //So read the code below and tell me what you think the results will be?
     fun dispatchTips() {
         Log.i("Coroutines", "Before launch")
-        launch(CommonPool) {  //reminder - CommonPool is redundant because it is the default
+        launch(CommonPool) {
+            //reminder - CommonPool is redundant because it is the default
             Log.i("Coroutines", "Inside Coroutine")
             delay(100)
             Log.i("Coroutines", "After delay")
@@ -496,11 +506,12 @@ class MainActivity : AppCompatActivity() {
     //you would change the code to the following - launch(CommonPool, CoroutineStart.UNDISPATCHED)
 
 
-
     /**
      * Stay tuned for the final episode of Kotlin Coroutines (maybe) where we go over "Shared mutable state and concurrency"
      * plus the Actors who define them!
      */
+
+    //First go over discovered advantage of Producer/Consumer!
 
 
     suspend fun massiveRun(context: CoroutineContext, action: suspend () -> Unit) {
@@ -534,6 +545,7 @@ class MainActivity : AppCompatActivity() {
     @Volatile // in Kotlin `volatile` is an annotation
     var volatileCounter = 0
 
+    //PopQuiz - Why is <Unit> greyed out in this and all the other examples?
     fun startMassiveRunWithVolatile() = runBlocking<Unit> {
         massiveRun(CommonPool) {
             volatileCounter++
@@ -578,8 +590,10 @@ class MainActivity : AppCompatActivity() {
     //Fine thread confinement means you limit all access to the shared state to a single thread, but coroutine is started
     //on a different thread
     fun startMassiveRunWithThreadConfinementFine() = runBlocking<Unit> {
-        massiveRun(CommonPool) { // run each coroutine in CommonPool
-            withContext(counterContext) { // but confine each increment to the single-threaded context
+        massiveRun(CommonPool) {
+            // run each coroutine in CommonPool
+            withContext(counterContext) {
+                // but confine each increment to the single-threaded context
                 counterThreadContextFine++
             }
         }
@@ -590,8 +604,9 @@ class MainActivity : AppCompatActivity() {
 
 
     var counterThreadContextCoarse = 0
-    fun startMassiveRunWithThreadConfinementCoarse() = runBlocking<Unit> {
-        massiveRun(counterContext) { // run each coroutine in the single-threaded context
+    fun startMassiveRunWithThreadConfinementCoarse() = runBlocking {
+        massiveRun(counterContext) {
+            // run each coroutine in the single-threaded context
             counterThreadContextCoarse++
         }
         Log.i("Coroutines", "Counter using coarse thread confi nement = $counterThreadContextCoarse")
@@ -611,15 +626,169 @@ class MainActivity : AppCompatActivity() {
     val mutex = Mutex()
     var counterMutex = 0
 
-    fun startMassiveRunWithMutex() = runBlocking<Unit> {
+    fun startMassiveRunWithMutex() = runBlocking {
         massiveRun(CommonPool) {
-            mutex.withLock { //Even easier the withLock extension function has mutex.lock, try{...}, finally{...}, and
-                                //mutex unlock all implemented for you.
+            mutex.withLock {
+                //Even easier the withLock extension function which has mutex.lock, try{...}, finally{...},
+                //and mutex.unlock all implemented for you.
                 counterMutex++
             }
         }
         Log.i("Coroutines", "Counter using a mutex object = $counterMutex")
         counterMutex = 0
     }
+    //Mutex uses fine grain locking, so it will take longer.
+
+
+    /**
+     * Actors - a combination of coroutine, confined and encapsulated state, and channel to communicate with other
+     *  coroutines.  Simple actor can be written as a function, actor with complex state are better in their own class.
+     */
+
+    //First go over the data structures used in this example
+
+    //actor coroutine builder. Incoming channel is in its scope, send channel is in its resulting job
+    fun counterActor() = actor<CounterMessage> {
+        var counter = 0 // actor state
+
+        // Note that msg is inferred by the channel in the Actor Scope(CounterMessage in this case). I find this something
+        // that can be hard to read/follow as you have to know about this particular channel by its actor coroutine builder
+        for (msg in channel) {
+            when (msg) {
+                is IncomingCounter -> counter++
+                is GetCounter -> msg.response.complete(counter)
+            }
+        }
+    }
+
+    fun startMassiveRunWithActor() = runBlocking {
+        val counterJob = counterActor() //Setup job.  Why do we need the job besides to close it?
+        massiveRun(CommonPool) {
+            counterJob.send(IncomingCounter) //Sending the message to the actor to change state
+        }
+
+        val response = CompletableDeferred<Int>()
+        counterJob.send(GetCounter(response)) //Sending the message to the actor to get the counter value
+        Log.i("Coroutines", "Counter using an Actor = ${response.await()}")
+    }
+
+    /**
+     * Select Expressions - way to await multiple suspending functions and select the first one that becomes available
+     *
+     */
+
+    fun fizz(context: CoroutineContext) = produce<String>(context) {
+        while (true) { // sends "Fizz" every 300 ms
+            delay(300)
+            send("Fizz")
+        }
+    }
+
+    fun buzz(context: CoroutineContext) = produce<String>(context) {
+        while (true) { // sends "Buzz!" every 500 ms
+            delay(500)
+            send("Buzz!")
+        }
+    }
+
+
+    //If we were just to use receive, we would only receive from either one channel or another.  Select allows us to
+    //receive from both simultaneously
+    suspend fun selectFizzBuzz(fizz: ReceiveChannel<String>, buzz: ReceiveChannel<String>) {
+        select<Unit> {
+            fizz.onReceive { value ->
+                Log.i("Coroutines", "fizz -> '$value'")
+
+            }
+            buzz.onReceive { value ->
+                Log.i("Coroutines", "buzz -> '$value'")
+            }
+        }
+    }
+
+    fun runFizzBuzz() = runBlocking{
+        val fizz = fizz(coroutineContext)
+        val buzz = buzz(coroutineContext)
+        repeat(7) {
+            selectFizzBuzz(fizz, buzz)
+        }
+        coroutineContext.cancelChildren() // cancel fizz & buzz coroutines
+    }
+
+    //What happens when the channel closes but we are still running select?
+
+
+    suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): String =
+            select<String> {
+                a.onReceiveOrNull { value ->
+                    if (value == null)
+                        "Channel 'a' is closed"
+                    else
+                        "a -> '$value'"
+                }
+                b.onReceiveOrNull { value ->
+                    if (value == null)
+                        "Channel 'b' is closed"
+                    else
+                        "b -> '$value'"
+                }
+            }
+
+
+    fun runSelectHandlingClosedChannel() = runBlocking{
+        val a = produce<String>(coroutineContext) {
+            repeat(4) { send("Hello $it") }
+        }
+        val b = produce<String>(coroutineContext) {
+            repeat(4) { send("World $it") }
+        }
+        repeat(8) { // print first eight results
+            Log.i("Coroutines", selectAorB(a, b))
+        }
+        coroutineContext.cancelChildren()
+    }
+
+    //Use the onSend clause to determine if a consumer is ready or not.
+    fun produceNumbers(context: CoroutineContext, side: SendChannel<Int>) = produce<Int>(context) {
+        for (num in 1..10) { // produce 10 numbers from 1 to 10
+            delay(100) // every 100 ms
+            select<Unit> {
+                onSend(num) {} // Send to the primary channel
+                side.onSend(num) {} // or to the side channel
+            }
+        }
+    }
+
+    fun runSideChannel() {
+        runBlocking{
+            // Setup side channel. We are using producer/consumer so main channel is implied in the consumeEach below
+            val side = Channel<Int>()
+
+            launch(coroutineContext) { // this is a very fast consumer for the side channel
+                side.consumeEach {
+                    Log.i("Coroutines", "Side channel has $it")
+                }
+            }
+
+            //Here we set up our main consumer
+            produceNumbers(coroutineContext, side).consumeEach {
+                Log.i("Coroutines", "Main channel has $it")
+                delay(250) // let us digest the consumed number properly, do not hurry
+            }
+            Log.i("Coroutines", "Done Consuming")
+            coroutineContext.cancelChildren()
+        }
+    }
 
 }
+
+sealed class CounterMessage
+
+//Note - As of 1.1 you no longer have to the subclasses inside of the sealed class itself
+object IncomingCounter : CounterMessage() //One way message to increment the counter
+
+//message to get value, deferred needed to send response
+class GetCounter(val response: CompletableDeferred<Int>) : CounterMessage()
+
+
+
