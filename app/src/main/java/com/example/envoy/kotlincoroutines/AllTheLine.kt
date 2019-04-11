@@ -62,7 +62,7 @@ class AllTheLines{
     }
 
     inline fun inlineFunction(lambda: () -> Unit) {
-        println(memberString)
+//        println(memberString)
     }
 
     /*
